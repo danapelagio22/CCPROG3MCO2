@@ -162,11 +162,6 @@ public class MembershipCardView extends VBox {
         pointsProgressBar.setProgress((membershipCard.getPoints() % 100) / 100.0);
     }
 
-    /**
-     * Gets the membership card.
-     *
-     * @return the membership card
-     */
     public MembershipCard getMembershipCard() {
         return membershipCard;
     }

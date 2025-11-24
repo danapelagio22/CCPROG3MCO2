@@ -3,6 +3,8 @@ import java.util.ArrayList;
 /**
  * Represents an employee of the convenience store, inheriting basic user functionality.
  * Employees have specific actions like adding products and restocking.
+ * 
+ * @author Joreve P. De Jesus
  */
 public class Employee extends User {
     private String employeeID;
@@ -64,12 +66,7 @@ public class Employee extends User {
         }
         System.out.println("Updated product information for: " + updatedProduct.getName());
     }
-
-    /**
-     * Returns the unique employee ID.
-     *
-     * @return The employee's ID string.
-     */
+    
     public String getEmployeeID() {
         return employeeID;
     }

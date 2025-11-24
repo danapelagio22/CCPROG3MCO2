@@ -3,6 +3,8 @@ import java.util.ArrayList;
 /**
  * Represents a shelf or display area in the store, dedicated to a specific category.
  * It holds a collection of Product objects that match its category.
+ * 
+ * @author Joreve P. De Jesus
  */
 public class Shelf {
     private Category category;
@@ -63,20 +65,10 @@ public class Shelf {
         System.out.println();
     }
 
-    /**
-     * Returns the category associated with this shelf.
-     *
-     * @return The shelf's category.
-     */
     public Category getCategory() {
         return category;
     }
 
-    /**
-     * Returns the list of products on this shelf.
-     *
-     * @return The ArrayList of products.
-     */
     public ArrayList<Product> getProducts() {
         return products;
     }

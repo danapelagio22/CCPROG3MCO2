@@ -4,6 +4,7 @@
  * Points are earned at a rate of 1 point per P50 spent.
  * 1 point can be redeemed for P1 discount.
  *
+ * @author Dana Ysabelle A. Pelagio
  */
 public class MembershipCard {
     private String cardNumber;
@@ -56,29 +57,14 @@ public class MembershipCard {
         return points; // 1 point = 1 peso
     }
 
-    /**
-     * Gets the current points balance.
-     * @return the number of points
-     */
     public int getPoints() {
         return points;
     }
 
-    /**
-     * Gets the card number.
-     *
-     * @return the card number
-     */
     public String getCardNumber() {
         return cardNumber;
     }
 
-    /**
-     * Sets the points balance directly.
-     * Used for loading saved data.
-     *
-     * @param points the points to set
-     */
     public void setPoints(int points) {
         if (points >= 0) {
             this.points = points;

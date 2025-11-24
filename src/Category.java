@@ -1,6 +1,8 @@
 /**
  * Represents a category for products, composed of a main category (e.g., Food, Beverages)
  * and a more specific sub-category (e.g., Vegetable, Juice).
+ * 
+ * @author Joreve P. De Jesus
  */
 public class Category {
     private String mainCategory;
@@ -17,21 +19,19 @@ public class Category {
         this.subCategory = subCategory;
     }
 
-    /**
-     * Returns the main category name.
-     *
-     * @return The main category (e.g., "Food").
-     */
     public String getName() { 
         return mainCategory; 
     }
 
-    /**
-     * Returns the sub-category type.
-     *
-     * @return The sub-category (e.g., "Vegetable").
-     */
     public String getType() { 
         return subCategory; 
+    }
+
+    public String setName(String mainCategory) { 
+        return this.mainCategory = mainCategory; 
+    }
+
+    public String setType(String subCategory) { 
+        return this.subCategory = subCategory; 
     }
 }

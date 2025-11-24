@@ -2,6 +2,8 @@
  * Customer class represents a customer in the convenience store.
  * Extends the User class and includes shopping cart functionality
  * and optional membership card support.
+ * 
+ * @author Dana Ysabelle A. Pelagio
  */
 public class Customer extends User {
     private MembershipCard membershipCard;
@@ -83,26 +85,14 @@ public class Customer extends User {
         return membershipCard != null;
     }
 
-    /**
-     * Gets the customer's membership card.
-     * @return the membership card, or null if customer has no card
-     */
     public MembershipCard getMembershipCard() {
         return membershipCard;
     }
 
-    /**
-     * Gets the customer's shopping cart.
-     * @return the customer's cart
-     */
     public Cart getCart() {
         return cart;
     }
 
-    /**
-     * Sets the membership card for this customer.
-     * @param membershipCard the membership card to assign to the customer
-     */
     public void setMembershipCard(MembershipCard membershipCard) {
         this.membershipCard = membershipCard;
     }

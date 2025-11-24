@@ -4,6 +4,8 @@ import java.time.LocalDate;
  * Represents a product available in the convenience store inventory.
  * Stores information like ID, name, price, stock, category, brand, variant,
  * and expiration date.
+ * 
+ * @author Joreve P. De Jesus
  */
 class Product {
     private int productID;
@@ -87,49 +89,36 @@ class Product {
         }
     }
     
-    /**
-     * Gets the product's unique ID.
-     * @return the product ID.
-     */
     public int getProductID() { return productID; }
-    /**
-     * Gets the name of the product.
-     * @return the product name.
-     */
     public String getName() { return name; }
-    /**
-     * Gets the price of the product.
-     * @return the product price.
-     */
     public double getPrice() { return price; }
-    /**
-     * Gets the current stock quantity.
-     * @return the stock quantity.
-     */
     public int getStock() { return stock; }
-    /**
-     * Gets the category of the product.
-     * @return the product category.
-     */
     public Category getCategory() { return category; }
-    /**
-     * Gets the brand of the product.
-     * @return the product brand, or null if not applicable.
-     */
     public String getBrand() { return brand; }
-    /**
-     * Gets the variant or size of the product.
-     * @return the product variant, or null if not applicable.
-     */
     public String getVariant() { return variant; }
-    /**
-     * Gets the expiration date of the product.
-     * @return the expiration date, or null if non-perishable.
-     */
     public LocalDate getExpirationDate() { return expirationDate; }
-    /**
-     * Checks if the product is perishable (has an expiration date).
-     * @return true if perishable, false otherwise.
-     */
     public boolean isPerishable() { return isPerishable; }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setPrice(double price) {
+        if (price >= 0) {
+            this.price = price;
+        }
+    }
+
+    public void setBrand(String brand) {
+        this.brand = brand;
+    }
+
+    public void setVariant(String variant) {
+        this.variant = variant;
+    }
+
+    public void setExpirationDate(LocalDate expirationDate) {
+        this.expirationDate = expirationDate;
+        this.isPerishable = (expirationDate != null);
+    }
 }

@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
  * The Transaction class represents a completed purchase.
  * It keeps track of the customer, the items they bought,
  * how they paid, and automatically computes the total cost with tax.
+ * 
+ * @author Dana Ysabelle A. Pelagio
  */
 public class Transaction {
     private String transactionID;
@@ -95,11 +97,6 @@ public class Transaction {
         return new Receipt(this);
     }
 
-    /**
-     * Sets the payment for this transaction after it's been accepted.
-     *
-     * @param payment the payment details
-     */
     public void setPayment(Payment payment) {
         this.payment = payment;
     }
@@ -107,18 +104,23 @@ public class Transaction {
     public String getTransactionID() {
         return transactionID;
     }
+
     public Customer getCustomer() {
         return customer;
     }
+
     public ArrayList<CartItem> getPurchasedItems() {
         return purchasedItems;
     }
+
     public double getTotalCost() {
         return totalCost;
     }
+
     public Payment getPayment() {
         return payment;
     }
+    
     public LocalDateTime getTimeStamp() {
         return timeStamp;
     }

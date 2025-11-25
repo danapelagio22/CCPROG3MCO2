@@ -3,6 +3,8 @@ import java.util.ArrayList;
 /**
  * Represents the main convenience store entity.
  * It holds the store's name, location, and manages its inventory.
+ * 
+ * @author Joreve P. De Jesus
  */
 public class ConvenienceStore {
     private String name;
@@ -40,36 +42,42 @@ public class ConvenienceStore {
     }
 
     /**
+     * Returns the sales history list.
+     *
+     * @return The ArrayList of transactions.
+     */
+    public ArrayList<Transaction> getSalesHistory() {
+        return salesHistory;
+    }
+
+    /**
      * Displays the current state of the store's inventory, organized by shelf.
      */
     public void displayInventory() {
         inventory.displayInventory();
     }
 
-    /**
-     * Returns the store's inventory object.
-     *
-     * @return The Inventory instance.
-     */
     public Inventory getInventory() {
         return inventory;
     }
 
-    /**
-     * Returns the name of the store.
-     *
-     * @return The store's name.
-     */
     public String getName() {
         return name;
     }
 
-    /**
-     * Returns the location of the store.
-     *
-     * @return The store's location.
-     */
     public String getLocation() {
         return location;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    void setLocation(String location) {
+        this.location = location;
+    }
+
+    public void setInventory(Inventory inventory) {
+        this.inventory = inventory;
     }
 }

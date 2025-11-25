@@ -164,20 +164,10 @@ public class CartView extends BorderPane {
         return itemBox;
     }
 
-    /**
-     * Gets the checkout button for external event handling.
-     *
-     * @return the checkout button
-     */
     public Button getCheckoutButton() {
         return checkoutButton;
     }
 
-    /**
-     * Gets the cart being displayed.
-     *
-     * @return the cart
-     */
     public Cart getCart() {
         return cart;
     }

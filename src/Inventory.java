@@ -1,7 +1,10 @@
 import java.util.ArrayList;
 
 /**
- * Manages the store's product inventory, keeping track of all products and organizing them into shelves.
+ * Manages the store's product inventory, keeping track 
+ * of all products and organizing them into shelves.
+ * 
+ * @author Joreve P. De Jesus
  */
 class Inventory {
     private ArrayList<Product> products;
@@ -91,7 +94,6 @@ class Inventory {
             Product product = item.getProduct();
             int quantityPurchased = item.getQuantity();
 
-            // Find the product in inventory and reduce its stock
             for (Product p : products) {
                 if (p.getProductID() == product.getProductID()) {
                     p.reduceStock(quantityPurchased);
@@ -110,11 +112,6 @@ class Inventory {
         }
     }
 
-    /**
-     * Returns the master list of all products.
-     *
-     * @return The ArrayList of all products.
-     */
     public ArrayList<Product> getProducts() {
         return products;
     }

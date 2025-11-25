@@ -1,60 +1,36 @@
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.time.format.DateTimeFormatter;
 
 /**
  * Receipt class generates and displays transaction receipts.
- * Displays itemized purchases, totals, and payment information.
- * Can save receipts to text files for record-keeping.
- *
+ * 
+ * @author Dana Ysabelle A. Pelagio and Joreve P. De Jesus
  */
 public class Receipt {
     private Transaction transaction;
+    private DataManager dataManager;
 
-    /**
-     * Constructs a Receipt for the specified transaction.
-     *
-     * @param transaction the transaction to create a receipt for
-     */
     public Receipt(Transaction transaction) {
         this.transaction = transaction;
     }
+    
+    public void setDataManager(DataManager dataManager) {
+        this.dataManager = dataManager;
+    }
 
-    /**
-     * Displays the receipt to the console.
-     * Shows itemized purchases, subtotal, tax, discounts,
-     * total cost, amount received, and change due.
-     */
     public void display() {
         String receiptText = generateReceiptText();
         System.out.print(receiptText);
     }
 
-    /**
-     * Saves the receipt to a text file.
-     * File is named using the transaction ID.
-     * Saved in the current directory.
-     */
     public void saveToFile() {
-        String filename = "receipt_" + transaction.getTransactionID() + ".txt";
-
-        try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
-            String receiptText = generateReceiptText();
-            writer.print(receiptText);
-            System.out.println("Receipt saved to: " + filename);
-        } catch (IOException e) {
-            System.err.println("Error saving receipt to file: " + e.getMessage());
+        if (dataManager != null) {
+            String receiptContent = generateReceiptText();
+            dataManager.saveReceipt(transaction.getTransactionID(), receiptContent);
+        } else {
+            System.err.println("DataManager not set. Cannot save receipt.");
         }
     }
 
-    /**
-     * Generates the formatted receipt text.
-     * This private helper method creates the receipt content
-     * that can be used for both display and file saving.
-     *
-     * @return the formatted receipt as a String
-     */
     private String generateReceiptText() {
         StringBuilder receipt = new StringBuilder();
 
@@ -63,13 +39,11 @@ public class Receipt {
         receipt.append("             RECEIPT\n");
         receipt.append("========================================\n");
 
-        // Format timestamp
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         receipt.append("Date: ").append(transaction.getTimeStamp().format(formatter)).append("\n");
         receipt.append("Transaction ID: ").append(transaction.getTransactionID()).append("\n");
         receipt.append("Customer: ").append(transaction.getCustomer().getName()).append("\n");
 
-        // Display membership info if applicable
         if (transaction.getCustomer().hasMembershipCard()) {
             MembershipCard card = transaction.getCustomer().getMembershipCard();
             receipt.append("Member Card: ").append(card.getCardNumber()).append("\n");
@@ -80,7 +54,6 @@ public class Receipt {
         receipt.append("ITEMS:\n");
         receipt.append("----------------------------------------\n");
 
-        // Display each item
         double subtotal = 0.0;
         for (CartItem item : transaction.getPurchasedItems()) {
             Product product = item.getProduct();
@@ -96,7 +69,6 @@ public class Receipt {
         receipt.append("----------------------------------------\n");
         receipt.append(String.format("Subtotal:               P%8.2f\n", subtotal));
 
-        // Calculate and display discounts
         double afterDiscount = transaction.applyDiscounts();
         double discount = subtotal - afterDiscount;
         if (discount > 0) {
@@ -104,7 +76,6 @@ public class Receipt {
             receipt.append(String.format("After Discount:         P%8.2f\n", afterDiscount));
         }
 
-        // Calculate and display VAT
         double vat = afterDiscount * 0.12;
         receipt.append(String.format("VAT (12%%):              P%8.2f\n", vat));
 

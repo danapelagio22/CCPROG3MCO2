@@ -3,6 +3,8 @@
  * various types of discounts to purchases.
  * Includes membership discounts, senior citizen discounts,
  * and VAT calculations.
+ * 
+ * @author Dana Ysabelle A. Pelagio
  */
 public class DiscountPolicy {
 

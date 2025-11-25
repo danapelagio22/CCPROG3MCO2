@@ -3,6 +3,8 @@ import java.util.ArrayList;
 /**
  * Cart class represents a shopping cart that holds items
  * selected by a customer for purchase.
+ * 
+ * @author Dana Ysabelle A. Pelagio
  */
 public class Cart {
     private ArrayList<CartItem> items;

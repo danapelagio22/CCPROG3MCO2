@@ -14,6 +14,7 @@ public class ConvenienceStoreController {
     private Stage primaryStage;
     private ConvenienceStore store;
     private Customer customer;
+    private MainApplication mainApp;
     private DataManager dataManager;
     private String username;
     
@@ -26,18 +27,17 @@ public class ConvenienceStoreController {
     private CheckoutView checkoutView;
     
     public ConvenienceStoreController(Stage primaryStage, ConvenienceStore store, 
-                          Customer customer, DataManager dataManager, String username) {
+                          Customer customer, MainApplication mainApp, DataManager dataManager, String username) {
         this.primaryStage = primaryStage;
         this.store = store;
         this.customer = customer;
+        this.mainApp = mainApp;
         this.dataManager = dataManager;
         this.username = username;
-        
-        primaryStage.setMaximized(true);
     }
     
     public void showShoppingView() {
-        storeView = new ConvenienceStoreView(store, customer, this);
+        storeView = new ConvenienceStoreView(store, customer, this, mainApp);
         storeScene = new Scene(storeView);
         
         primaryStage.setScene(storeScene);
@@ -69,6 +69,7 @@ public class ConvenienceStoreController {
         cartLayout.setBottom(bottomBox);
         
         cartScene = new Scene(cartLayout);
+        
         primaryStage.setScene(cartScene);
         primaryStage.setTitle("Shopping Cart");
     }
@@ -79,6 +80,7 @@ public class ConvenienceStoreController {
         checkoutView.getProcessPaymentButton().setOnAction(e -> processCheckout());
         
         checkoutScene = new Scene(checkoutView);
+        
         primaryStage.setScene(checkoutScene);
         primaryStage.setTitle("Checkout");
     }
@@ -129,23 +131,50 @@ public class ConvenienceStoreController {
             }
             
             dataManager.saveProducts(store.getInventory().getProducts());
-            
             dataManager.saveTransaction(transaction);
             
+            // Generate and save receipt automatically
             Receipt receipt = transaction.generateReceipt();
-            receipt.setDataManager(dataManager); // Set data manager for saving
+            receipt.setDataManager(dataManager);
+            receipt.saveToFile(); // Auto-save receipt
+            
             ReceiptView receiptView = new ReceiptView(receipt);
             receiptView.show();
             
             showAlert("Transaction Complete",
-                     String.format("Change: ₱%.2f\nThank you for shopping!", payment.computeChange()),
+                     String.format("Change: ₱%.2f\nReceipt saved automatically.\nThank you for shopping!", 
+                                 payment.computeChange()),
                      Alert.AlertType.INFORMATION);
             
+            // Reload inventory to reflect updated stock
+            reloadInventory();
             showShoppingView();
             storeView.refresh();
             
         } catch (NumberFormatException ex) {
             showAlert("Invalid Input", "Please enter a valid amount.", Alert.AlertType.ERROR);
+        }
+    }
+    
+    /**
+     * Reloads inventory from data manager to get latest stock levels.
+     */
+    private void reloadInventory() {
+        store.getInventory().getProducts().clear();
+        for (Shelf shelf : store.getInventory().getShelves()) {
+            shelf.getProducts().clear();
+        }
+        
+        for (Product product : dataManager.loadProducts()) {
+            store.getInventory().addProduct(product);
+            
+            for (Shelf shelf : store.getInventory().getShelves()) {
+                if (shelf.getCategory().getName().equals(product.getCategory().getName()) &&
+                    shelf.getCategory().getType().equals(product.getCategory().getType())) {
+                    shelf.addProduct(product);
+                    break;
+                }
+            }
         }
     }
     
@@ -157,17 +186,7 @@ public class ConvenienceStoreController {
         
         confirm.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
-                customer.getCart().clear();
-                
-                LoginController loginController = new LoginController(null, dataManager);
-                LoginView loginView = new LoginView(loginController);
-                
-                Scene loginScene = new Scene(loginView);
-                primaryStage.setScene(loginScene);
-                primaryStage.setTitle("Login - Convenience Store");
-                primaryStage.setMaximized(false);
-                primaryStage.setWidth(800);
-                primaryStage.setHeight(700);
+                mainApp.logout();
             }
         });
     }

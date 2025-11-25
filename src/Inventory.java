@@ -1,3 +1,5 @@
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 
 /**
@@ -52,6 +54,11 @@ class Inventory {
      */
     public void removeProduct(int productID) {
         products.removeIf(p -> p.getProductID() == productID);
+        
+        // Also remove from shelves
+        for (Shelf shelf : shelves) {
+            shelf.getProducts().removeIf(p -> p.getProductID() == productID);
+        }
     }
 
     /**
@@ -82,6 +89,38 @@ class Inventory {
             }
         }
         return lowStock;
+    }
+
+    /**
+     * Checks all perishable products and returns those expiring within the specified days.
+     *
+     * @param daysThreshold number of days to check (e.g., 15 for products expiring in 15 days or less)
+     * @return An ArrayList of products expiring soon
+     */
+    public ArrayList<Product> flagExpiringProducts(int daysThreshold) {
+        ArrayList<Product> expiringProducts = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        
+        for (Product p : products) {
+            if (p.isPerishable() && p.getExpirationDate() != null) {
+                long daysUntilExpiry = ChronoUnit.DAYS.between(today, p.getExpirationDate());
+                if (daysUntilExpiry >= 0 && daysUntilExpiry <= daysThreshold) {
+                    expiringProducts.add(p);
+                }
+            }
+        }
+        
+        return expiringProducts;
+    }
+
+    /**
+     * Checks if a product exists by ID.
+     *
+     * @param productID The ID to check
+     * @return true if product exists, false otherwise
+     */
+    public boolean productExists(int productID) {
+        return products.stream().anyMatch(p -> p.getProductID() == productID);
     }
 
     /**

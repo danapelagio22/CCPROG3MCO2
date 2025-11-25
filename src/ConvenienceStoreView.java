@@ -4,11 +4,13 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 /**
  * ConvenienceStoreView displays the main shopping interface organized by categories.
- * Shows products in tabs separated by category with add to cart functionality.
+ * Shows products in nested tabs (Food/Beverages > Subcategories).
  *
  * @author Dana Ysabelle A. Pelagio and Joreve P. De Jesus
  */
@@ -16,8 +18,9 @@ public class ConvenienceStoreView extends BorderPane {
     private ConvenienceStore store;
     private Customer customer;
     private ConvenienceStoreController controller;
+    private MainApplication mainApp;
     
-    private TabPane categoryTabs;
+    private TabPane mainCategoryTabs;
     private Button viewCartButton;
     private Label cartItemCountLabel;
     
@@ -28,10 +31,11 @@ public class ConvenienceStoreView extends BorderPane {
      * @param customer The current customer
      * @param controller The store controller
      */
-    public ConvenienceStoreView(ConvenienceStore store, Customer customer, ConvenienceStoreController controller) {
+    public ConvenienceStoreView(ConvenienceStore store, Customer customer, ConvenienceStoreController controller, MainApplication mainApp) {
         this.store = store;
         this.customer = customer;
         this.controller = controller;
+        this.mainApp = mainApp;
         initializeUI();
     }
     
@@ -43,20 +47,20 @@ public class ConvenienceStoreView extends BorderPane {
         HBox topBar = createTopBar();
         setTop(topBar);
         
-        // Center: Category tabs
-        categoryTabs = new TabPane();
-        categoryTabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+        // Center: Main category tabs (Food, Beverages)
+        mainCategoryTabs = new TabPane();
+        mainCategoryTabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
         
-        // Group products by category
-        Map<String, List<Product>> productsByCategory = groupProductsByCategory();
+        // Organize products by main category then subcategory
+        Map<String, Map<String, List<Product>>> organizedProducts = organizeProductsByCategory();
         
-        // Create tabs for each category
-        for (Map.Entry<String, List<Product>> entry : productsByCategory.entrySet()) {
-            Tab tab = createCategoryTab(entry.getKey(), entry.getValue());
-            categoryTabs.getTabs().add(tab);
+        // Create main tabs
+        for (Map.Entry<String, Map<String, List<Product>>> entry : organizedProducts.entrySet()) {
+            Tab mainTab = createMainCategoryTab(entry.getKey(), entry.getValue());
+            mainCategoryTabs.getTabs().add(mainTab);
         }
         
-        setCenter(categoryTabs);
+        setCenter(mainCategoryTabs);
         
         // Bottom: Shopping info
         HBox bottomBar = createBottomBar();
@@ -125,29 +129,47 @@ public class ConvenienceStoreView extends BorderPane {
     }
     
     /**
-     * Groups products by their main category.
+     * Organizes products by main category (Food, Beverages) then subcategory.
      */
-    private Map<String, List<Product>> groupProductsByCategory() {
-        Map<String, List<Product>> grouped = new LinkedHashMap<>();
+    private Map<String, Map<String, List<Product>>> organizeProductsByCategory() {
+        Map<String, Map<String, List<Product>>> organized = new LinkedHashMap<>();
         
         for (Shelf shelf : store.getInventory().getShelves()) {
-            String categoryKey = shelf.getCategory().getName() + " - " + shelf.getCategory().getType();
+            String mainCategory = shelf.getCategory().getName();
+            String subCategory = shelf.getCategory().getType();
             
-            if (!grouped.containsKey(categoryKey)) {
-                grouped.put(categoryKey, new ArrayList<>());
-            }
-            
-            grouped.get(categoryKey).addAll(shelf.getProducts());
+            organized.putIfAbsent(mainCategory, new LinkedHashMap<>());
+            organized.get(mainCategory).putIfAbsent(subCategory, new ArrayList<>());
+            organized.get(mainCategory).get(subCategory).addAll(shelf.getProducts());
         }
         
-        return grouped;
+        return organized;
     }
     
     /**
-     * Creates a tab for a specific category.
+     * Creates a main category tab (Food or Beverages) with sub-category tabs inside.
      */
-    private Tab createCategoryTab(String categoryName, List<Product> products) {
-        Tab tab = new Tab(categoryName);
+    private Tab createMainCategoryTab(String mainCategory, Map<String, List<Product>> subCategories) {
+        Tab mainTab = new Tab(mainCategory);
+        
+        // Create sub-tabs for each subcategory
+        TabPane subTabPane = new TabPane();
+        subTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+        
+        for (Map.Entry<String, List<Product>> subCat : subCategories.entrySet()) {
+            Tab subTab = createSubCategoryTab(subCat.getKey(), subCat.getValue());
+            subTabPane.getTabs().add(subTab);
+        }
+        
+        mainTab.setContent(subTabPane);
+        return mainTab;
+    }
+    
+    /**
+     * Creates a sub-category tab with products displayed in a flow pane.
+     */
+    private Tab createSubCategoryTab(String subCategory, List<Product> products) {
+        Tab tab = new Tab(subCategory);
         
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setFitToWidth(true);
@@ -202,9 +224,15 @@ public class ConvenienceStoreView extends BorderPane {
         }
         
         if (product.getExpirationDate() != null) {
+            long daysUntilExpiry = ChronoUnit.DAYS.between(LocalDate.now(), product.getExpirationDate());
             Label expLabel = new Label("Exp: " + product.getExpirationDate());
             expLabel.setFont(Font.font("Arial", 11));
-            expLabel.setStyle("-fx-text-fill: #ff6b6b;");
+            
+            if (daysUntilExpiry <= 15) {
+                expLabel.setStyle("-fx-text-fill: #dc3545; -fx-font-weight: bold;");
+            } else {
+                expLabel.setStyle("-fx-text-fill: #ff6b6b;");
+            }
             card.getChildren().add(expLabel);
         }
         
@@ -278,12 +306,12 @@ public class ConvenienceStoreView extends BorderPane {
      * Refreshes the entire view.
      */
     public void refresh() {
-        categoryTabs.getTabs().clear();
+        mainCategoryTabs.getTabs().clear();
         
-        Map<String, List<Product>> productsByCategory = groupProductsByCategory();
-        for (Map.Entry<String, List<Product>> entry : productsByCategory.entrySet()) {
-            Tab tab = createCategoryTab(entry.getKey(), entry.getValue());
-            categoryTabs.getTabs().add(tab);
+        Map<String, Map<String, List<Product>>> organizedProducts = organizeProductsByCategory();
+        for (Map.Entry<String, Map<String, List<Product>>> entry : organizedProducts.entrySet()) {
+            Tab mainTab = createMainCategoryTab(entry.getKey(), entry.getValue());
+            mainCategoryTabs.getTabs().add(mainTab);
         }
         
         updateCartCount();

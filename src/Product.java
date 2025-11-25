@@ -89,16 +89,6 @@ class Product {
         }
     }
     
-    public int getProductID() { return productID; }
-    public String getName() { return name; }
-    public double getPrice() { return price; }
-    public int getStock() { return stock; }
-    public Category getCategory() { return category; }
-    public String getBrand() { return brand; }
-    public String getVariant() { return variant; }
-    public LocalDate getExpirationDate() { return expirationDate; }
-    public boolean isPerishable() { return isPerishable; }
-
     public void setName(String name) {
         this.name = name;
     }
@@ -121,4 +111,14 @@ class Product {
         this.expirationDate = expirationDate;
         this.isPerishable = (expirationDate != null);
     }
+
+    public int getProductID() { return productID; }
+    public String getName() { return name; }
+    public double getPrice() { return price; }
+    public int getStock() { return stock; }
+    public Category getCategory() { return category; }
+    public String getBrand() { return brand; }
+    public String getVariant() { return variant; }
+    public LocalDate getExpirationDate() { return expirationDate; }
+    public boolean isPerishable() { return isPerishable; }
 }

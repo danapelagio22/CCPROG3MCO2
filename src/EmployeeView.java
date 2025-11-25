@@ -5,28 +5,30 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 /**
  * EmployeeView displays the employee dashboard with inventory management.
- * Updated to use DataManager and fix edit functionality.
+ * Updated with improved UI organization and collapsible alert panels.
  *
  * @author Joreve P. De Jesus
  */
 public class EmployeeView extends BorderPane {
     private ConvenienceStore store;
     private Employee employee;
-    private MainApplication mainApp;
-    private DataManager dataManager;
+    private EmployeeController controller;
     
-    private TabPane categoryTabs;
-    private VBox lowStockBox;
+    private TabPane mainCategoryTabs;
+    private TitledPane lowStockPane;
+    private TitledPane expiryAlertPane;
+    private int currentMainTabIndex = 0;
+    private Map<String, Integer> subTabIndices = new HashMap<>();
     
-    public EmployeeView(ConvenienceStore store, Employee employee, MainApplication mainApp, DataManager dataManager) {
+    public EmployeeView(ConvenienceStore store, Employee employee, EmployeeController controller) {
         this.store = store;
         this.employee = employee;
-        this.mainApp = mainApp;
-        this.dataManager = dataManager;
+        this.controller = controller;
         initializeUI();
     }
     
@@ -64,42 +66,51 @@ public class EmployeeView extends BorderPane {
         
         Button logoutButton = new Button("Logout");
         logoutButton.setStyle("-fx-background-color: #f44336; -fx-text-fill: white;");
-        logoutButton.setOnAction(e -> mainApp.logout());
+        logoutButton.setOnAction(e -> controller.handleLogout());
         
         topBar.getChildren().addAll(titleLabel, spacer, employeeLabel, logoutButton);
         return topBar;
     }
     
     private VBox createInventoryManagementView() {
-        VBox inventoryBox = new VBox(15);
+        VBox inventoryBox = new VBox(10);
         inventoryBox.setPadding(new Insets(20));
         
         Label titleLabel = new Label("Inventory Management");
         titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
         
-        lowStockBox = createLowStockAlert();
+        // Collapsible alert boxes
+        Accordion alertAccordion = new Accordion();
+        lowStockPane = createLowStockAlert();
+        expiryAlertPane = createExpiryAlert();
         
-        categoryTabs = new TabPane();
-        categoryTabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+        alertAccordion.getPanes().addAll(lowStockPane, expiryAlertPane);
+        alertAccordion.setMaxHeight(200);
         
-        Map<String, List<Product>> productsByCategory = groupProductsByCategory();
-        for (Map.Entry<String, List<Product>> entry : productsByCategory.entrySet()) {
-            Tab tab = createProductManagementTab(entry.getKey(), entry.getValue());
-            categoryTabs.getTabs().add(tab);
+        // Main category tabs (Food, Beverages)
+        mainCategoryTabs = new TabPane();
+        mainCategoryTabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+        VBox.setVgrow(mainCategoryTabs, Priority.ALWAYS);
+        
+        Map<String, Map<String, List<Product>>> organizedProducts = organizeProductsByCategory();
+        
+        for (Map.Entry<String, Map<String, List<Product>>> mainCat : organizedProducts.entrySet()) {
+            Tab mainTab = createMainCategoryTab(mainCat.getKey(), mainCat.getValue());
+            mainCategoryTabs.getTabs().add(mainTab);
         }
         
-        inventoryBox.getChildren().addAll(titleLabel, lowStockBox, new Separator(), categoryTabs);
+        // Track tab changes
+        mainCategoryTabs.getSelectionModel().selectedIndexProperty().addListener((obs, oldVal, newVal) -> {
+            currentMainTabIndex = newVal.intValue();
+        });
+        
+        inventoryBox.getChildren().addAll(titleLabel, alertAccordion, mainCategoryTabs);
         return inventoryBox;
     }
     
-    private VBox createLowStockAlert() {
-        VBox alertBox = new VBox(10);
-        alertBox.setPadding(new Insets(15));
-        alertBox.setStyle("-fx-background-color: #fff3cd; -fx-border-color: #ffc107; -fx-border-width: 2; -fx-border-radius: 5;");
-        
-        Label alertTitle = new Label("⚠️ Low Stock Alerts");
-        alertTitle.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-        alertTitle.setStyle("-fx-text-fill: #856404;");
+    private TitledPane createLowStockAlert() {
+        VBox contentBox = new VBox(10);
+        contentBox.setPadding(new Insets(10));
         
         FlowPane lowStockFlow = new FlowPane();
         lowStockFlow.setHgap(10);
@@ -109,7 +120,7 @@ public class EmployeeView extends BorderPane {
         
         if (lowStock.isEmpty()) {
             Label noAlerts = new Label("No low stock items");
-            noAlerts.setStyle("-fx-text-fill: #856404;");
+            noAlerts.setStyle("-fx-text-fill: #666;");
             lowStockFlow.getChildren().add(noAlerts);
         } else {
             for (Product p : lowStock) {
@@ -120,28 +131,81 @@ public class EmployeeView extends BorderPane {
             }
         }
         
-        alertBox.getChildren().addAll(alertTitle, lowStockFlow);
-        return alertBox;
+        contentBox.getChildren().add(lowStockFlow);
+        
+        TitledPane pane = new TitledPane("⚠️ Low Stock Alerts (" + lowStock.size() + ")", contentBox);
+        pane.setStyle("-fx-background-color: #fff3cd;");
+        return pane;
     }
     
-    private Map<String, List<Product>> groupProductsByCategory() {
-        Map<String, List<Product>> grouped = new LinkedHashMap<>();
+    private TitledPane createExpiryAlert() {
+        VBox contentBox = new VBox(10);
+        contentBox.setPadding(new Insets(10));
         
-        for (Shelf shelf : store.getInventory().getShelves()) {
-            String categoryKey = shelf.getCategory().getName() + " - " + shelf.getCategory().getType();
-            
-            if (!grouped.containsKey(categoryKey)) {
-                grouped.put(categoryKey, new ArrayList<>());
+        FlowPane expiryFlow = new FlowPane();
+        expiryFlow.setHgap(10);
+        expiryFlow.setVgap(5);
+        
+        ArrayList<Product> expiringProducts = store.getInventory().flagExpiringProducts(15);
+        
+        if (expiringProducts.isEmpty()) {
+            Label noAlerts = new Label("No products expiring soon");
+            noAlerts.setStyle("-fx-text-fill: #666;");
+            expiryFlow.getChildren().add(noAlerts);
+        } else {
+            for (Product p : expiringProducts) {
+                long daysUntilExpiry = ChronoUnit.DAYS.between(LocalDate.now(), p.getExpirationDate());
+                Label itemLabel = new Label(p.getName() + ": " + daysUntilExpiry + " days");
+                itemLabel.setStyle("-fx-background-color: #dc3545; -fx-text-fill: white; " +
+                                 "-fx-padding: 5 10; -fx-background-radius: 3;");
+                expiryFlow.getChildren().add(itemLabel);
             }
-            
-            grouped.get(categoryKey).addAll(shelf.getProducts());
         }
         
-        return grouped;
+        contentBox.getChildren().add(expiryFlow);
+        
+        TitledPane pane = new TitledPane("📅 Expiration Alerts (" + expiringProducts.size() + ")", contentBox);
+        pane.setStyle("-fx-background-color: #f8d7da;");
+        return pane;
     }
     
-    private Tab createProductManagementTab(String categoryName, List<Product> products) {
-        Tab tab = new Tab(categoryName);
+    private Map<String, Map<String, List<Product>>> organizeProductsByCategory() {
+        Map<String, Map<String, List<Product>>> organized = new LinkedHashMap<>();
+        
+        for (Shelf shelf : store.getInventory().getShelves()) {
+            String mainCat = shelf.getCategory().getName();
+            String subCat = shelf.getCategory().getType();
+            
+            organized.putIfAbsent(mainCat, new LinkedHashMap<>());
+            organized.get(mainCat).putIfAbsent(subCat, new ArrayList<>());
+            organized.get(mainCat).get(subCat).addAll(shelf.getProducts());
+        }
+        
+        return organized;
+    }
+    
+    private Tab createMainCategoryTab(String mainCategory, Map<String, List<Product>> subCategories) {
+        Tab mainTab = new Tab(mainCategory);
+        
+        TabPane subTabPane = new TabPane();
+        subTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+        
+        for (Map.Entry<String, List<Product>> subCat : subCategories.entrySet()) {
+            Tab subTab = createSubCategoryTab(subCat.getKey(), subCat.getValue());
+            subTabPane.getTabs().add(subTab);
+        }
+        
+        // Track sub-tab changes
+        subTabPane.getSelectionModel().selectedIndexProperty().addListener((obs, oldVal, newVal) -> {
+            subTabIndices.put(mainCategory, newVal.intValue());
+        });
+        
+        mainTab.setContent(subTabPane);
+        return mainTab;
+    }
+    
+    private Tab createSubCategoryTab(String subCategory, List<Product> products) {
+        Tab tab = new Tab(subCategory);
         
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setFitToWidth(true);
@@ -198,7 +262,12 @@ public class EmployeeView extends BorderPane {
             detailsBox.getChildren().add(new Label("Variant: " + product.getVariant()));
         }
         if (product.getExpirationDate() != null) {
-            detailsBox.getChildren().add(new Label("Exp: " + product.getExpirationDate()));
+            long daysUntilExpiry = ChronoUnit.DAYS.between(LocalDate.now(), product.getExpirationDate());
+            Label expLabel = new Label("Exp: " + product.getExpirationDate());
+            if (daysUntilExpiry <= 15) {
+                expLabel.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+            }
+            detailsBox.getChildren().add(expLabel);
         }
         
         Separator sep = new Separator();
@@ -216,7 +285,7 @@ public class EmployeeView extends BorderPane {
         Button removeButton = new Button("Remove");
         removeButton.setStyle("-fx-background-color: #f44336; -fx-text-fill: white;");
         removeButton.setPrefWidth(100);
-        removeButton.setOnAction(e -> showRemoveDialog(product));
+        removeButton.setOnAction(e -> controller.handleRemoveProduct(product));
         
         HBox buttonBox = new HBox(5, restockButton, editButton);
         buttonBox.setAlignment(Pos.CENTER);
@@ -258,12 +327,7 @@ public class EmployeeView extends BorderPane {
         });
         
         Optional<Integer> result = dialog.showAndWait();
-        result.ifPresent(quantity -> {
-            employee.restockItem(store.getInventory(), product, quantity);
-            dataManager.updateProduct(product);
-            refreshInventory();
-            showAlert("Success", "Product restocked successfully!", Alert.AlertType.INFORMATION);
-        });
+        result.ifPresent(quantity -> controller.handleRestock(product, quantity));
     }
     
     private void showEditDialog(Product product) {
@@ -286,8 +350,8 @@ public class EmployeeView extends BorderPane {
         DatePicker expDatePicker = new DatePicker(product.getExpirationDate());
         
         ComboBox<String> categoryCombo = new ComboBox<>();
-        categoryCombo.getItems().addAll("Food-Snacks", "Food-Vegetables", "Food-Fruits", 
-                                       "Beverages-Cold Drinks", "Beverages-Juice");
+        List<String> allCategories = getAllCategories();
+        categoryCombo.getItems().addAll(allCategories);
         String currentCategory = product.getCategory().getName() + "-" + product.getCategory().getType();
         categoryCombo.setValue(currentCategory);
         
@@ -332,7 +396,10 @@ public class EmployeeView extends BorderPane {
                     return new Product(product.getProductID(), name, price, product.getStock(),
                                      category, brand, variant, expDate);
                 } catch (NumberFormatException e) {
-                    showAlert("Error", "Invalid price value", Alert.AlertType.ERROR);
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Error");
+                    alert.setContentText("Invalid price value");
+                    alert.showAndWait();
                     return null;
                 }
             }
@@ -340,28 +407,7 @@ public class EmployeeView extends BorderPane {
         });
         
         Optional<Product> result = dialog.showAndWait();
-        result.ifPresent(updatedProduct -> {
-            employee.updateProductInfo(store.getInventory(), updatedProduct);
-            dataManager.updateProduct(updatedProduct);
-            refreshInventory();
-            showAlert("Success", "Product updated successfully!", Alert.AlertType.INFORMATION);
-        });
-    }
-    
-    private void showRemoveDialog(Product product) {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Remove Product");
-        confirm.setHeaderText("Remove: " + product.getName());
-        confirm.setContentText("Are you sure you want to remove this product from inventory?");
-        
-        confirm.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                store.getInventory().removeProduct(product.getProductID());
-                dataManager.removeProduct(product.getProductID());
-                refreshInventory();
-                showAlert("Success", "Product removed successfully!", Alert.AlertType.INFORMATION);
-            }
-        });
+        result.ifPresent(updatedProduct -> controller.handleEditProduct(updatedProduct));
     }
     
     private VBox createAddProductView() {
@@ -388,8 +434,8 @@ public class EmployeeView extends BorderPane {
         DatePicker expDatePicker = new DatePicker();
         
         ComboBox<String> categoryCombo = new ComboBox<>();
-        categoryCombo.getItems().addAll("Food-Snacks", "Food-Vegetables", "Food-Fruits", 
-                                       "Beverages-Cold Drinks", "Beverages-Juice");
+        List<String> allCategories = getAllCategories();
+        categoryCombo.getItems().addAll(allCategories);
         categoryCombo.setPrefWidth(200);
         
         formGrid.add(new Label("Product ID:"), 0, 0);
@@ -420,35 +466,17 @@ public class EmployeeView extends BorderPane {
         addButton.setOnAction(e -> {
             try {
                 int id = Integer.parseInt(idField.getText());
-                
-                if (dataManager.productExists(id)) {
-                    statusLabel.setText("Product ID already exists!");
-                    statusLabel.setStyle("-fx-text-fill: red;");
-                    return;
-                }
-                
                 String name = nameField.getText();
                 double price = Double.parseDouble(priceField.getText());
                 int stock = Integer.parseInt(stockField.getText());
                 
                 String[] catParts = categoryCombo.getValue().split("-");
-                Category category = new Category(catParts[0], catParts[1]);
-                
                 String brand = brandField.getText().isEmpty() ? null : brandField.getText();
                 String variant = variantField.getText().isEmpty() ? null : variantField.getText();
                 LocalDate expDate = expDatePicker.getValue();
                 
-                Product product = new Product(id, name, price, stock, category, brand, variant, expDate);
-                employee.addProduct(store.getInventory(), product);
-                dataManager.addProduct(product);
-                
-                for (Shelf shelf : store.getInventory().getShelves()) {
-                    if (shelf.getCategory().getName().equals(category.getName()) &&
-                        shelf.getCategory().getType().equals(category.getType())) {
-                        shelf.addProduct(product);
-                        break;
-                    }
-                }
+                controller.handleAddProduct(id, name, price, stock, catParts[0], catParts[1], 
+                                          brand, variant, expDate);
                 
                 statusLabel.setText("Product added successfully!");
                 statusLabel.setStyle("-fx-text-fill: green;");
@@ -460,8 +488,6 @@ public class EmployeeView extends BorderPane {
                 brandField.clear();
                 variantField.clear();
                 expDatePicker.setValue(null);
-                
-                refreshInventory();
                 
             } catch (NumberFormatException ex) {
                 statusLabel.setText("Error: Invalid number format");
@@ -492,7 +518,7 @@ public class EmployeeView extends BorderPane {
         sb.append("SALES HISTORY\n");
         sb.append("=".repeat(80)).append("\n\n");
         
-        List<String> transactions = dataManager.loadTransactions();
+        List<String> transactions = controller.getDataManager().loadTransactions();
         
         if (transactions.isEmpty()) {
             sb.append("No transactions yet.\n");
@@ -512,42 +538,92 @@ public class EmployeeView extends BorderPane {
         salesArea.setText(sb.toString());
         
         Button refreshButton = new Button("Refresh");
-        refreshButton.setOnAction(e -> {
-            VBox refreshed = createSalesView();
-            Tab currentTab = ((TabPane)((VBox)salesBox.getParent()).getParent()).getSelectionModel().getSelectedItem();
-            currentTab.setContent(refreshed);
-        });
+        refreshButton.setOnAction(e -> refreshSales(salesArea));
         
         salesBox.getChildren().addAll(titleLabel, salesArea, refreshButton);
         return salesBox;
     }
     
-    private void refreshInventory() {
-        int selectedTab = categoryTabs.getSelectionModel().getSelectedIndex();
-
-        categoryTabs.getTabs().clear();
+    private void refreshSales(TextArea salesArea) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("SALES HISTORY\n");
+        sb.append("=".repeat(80)).append("\n\n");
         
-        Map<String, List<Product>> productsByCategory = groupProductsByCategory();
-        for (Map.Entry<String, List<Product>> entry : productsByCategory.entrySet()) {
-            Tab tab = createProductManagementTab(entry.getKey(), entry.getValue());
-            categoryTabs.getTabs().add(tab);
-        }
-
-        if (selectedTab >= 0 && selectedTab < categoryTabs.getTabs().size()) {
-            categoryTabs.getSelectionModel().select(selectedTab);
+        List<String> transactions = controller.getDataManager().loadTransactions();
+        
+        if (transactions.isEmpty()) {
+            sb.append("No transactions yet.\n");
+        } else {
+            for (String transaction : transactions) {
+                String[] parts = transaction.split("\\|\\|\\|");
+                if (parts.length >= 4) {
+                    sb.append(String.format("Transaction ID: %s\n", parts[0]));
+                    sb.append(String.format("Customer: %s\n", parts[1]));
+                    sb.append(String.format("Total: ₱%.2f\n", Double.parseDouble(parts[2])));
+                    sb.append(String.format("Date: %s\n", parts[3]));
+                    sb.append("-".repeat(80)).append("\n");
+                }
+            }
         }
         
-        VBox parent = (VBox) lowStockBox.getParent();
-        int index = parent.getChildren().indexOf(lowStockBox);
-        parent.getChildren().set(index, createLowStockAlert());
-        lowStockBox = (VBox) parent.getChildren().get(index);
+        salesArea.setText(sb.toString());
     }
     
-    private void showAlert(String title, String message, Alert.AlertType type) {
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+    /**
+     * Gets all available categories from existing shelves.
+     */
+    private List<String> getAllCategories() {
+        Set<String> categories = new LinkedHashSet<>();
+        
+        for (Shelf shelf : store.getInventory().getShelves()) {
+            String category = shelf.getCategory().getName() + "-" + shelf.getCategory().getType();
+            categories.add(category);
+        }
+        
+        return new ArrayList<>(categories);
+    }
+    
+    /**
+     * Refreshes the entire inventory display.
+     */
+    public void refreshInventory() {
+        // Save current tab positions
+        String currentMainCategory = null;
+        if (currentMainTabIndex >= 0 && currentMainTabIndex < mainCategoryTabs.getTabs().size()) {
+            currentMainCategory = mainCategoryTabs.getTabs().get(currentMainTabIndex).getText();
+        }
+        
+        // Clear and rebuild
+        mainCategoryTabs.getTabs().clear();
+        
+        Map<String, Map<String, List<Product>>> organizedProducts = organizeProductsByCategory();
+        
+        for (Map.Entry<String, Map<String, List<Product>>> mainCat : organizedProducts.entrySet()) {
+            Tab mainTab = createMainCategoryTab(mainCat.getKey(), mainCat.getValue());
+            mainCategoryTabs.getTabs().add(mainTab);
+        }
+        
+        // Restore main tab position
+        if (currentMainCategory != null) {
+            for (int i = 0; i < mainCategoryTabs.getTabs().size(); i++) {
+                if (mainCategoryTabs.getTabs().get(i).getText().equals(currentMainCategory)) {
+                    mainCategoryTabs.getSelectionModel().select(i);
+                    
+                    // Restore sub-tab position
+                    Integer subTabIndex = subTabIndices.get(currentMainCategory);
+                    if (subTabIndex != null) {
+                        TabPane subTabPane = (TabPane) mainCategoryTabs.getTabs().get(i).getContent();
+                        if (subTabIndex < subTabPane.getTabs().size()) {
+                            subTabPane.getSelectionModel().select(subTabIndex);
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+        
+        // Refresh alerts
+        lowStockPane.setContent(createLowStockAlert().getContent());
+        expiryAlertPane.setContent(createExpiryAlert().getContent());
     }
 }

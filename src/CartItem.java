@@ -1,8 +1,6 @@
 /**
- * CartItem class represents a single line item in a shopping cart.
- * Contains a product and the quantity of that product.
- * 
- * @author Dana Ysabelle A. Pelagio
+ * Represents a single line item in a shopping cart,
+ * containing a product and its selected quantity.
  */
 public class CartItem {
     private Product product;
@@ -10,6 +8,7 @@ public class CartItem {
 
     /**
      * Constructs a CartItem with the specified product and quantity.
+     * 
      * @param product the product in this cart item
      * @param quantity the quantity of the product
      */
@@ -27,14 +26,30 @@ public class CartItem {
         return product.getPrice() * quantity;
     }
 
+    /**
+     * Retrieves the product in this cart item.
+     *
+     * @return the product
+     */
     public Product getProduct() {
         return product;
     }
 
+    /**
+     * Retrieves the quantity of the product in this cart item.
+     *
+     * @return the quantity value
+     */
     public int getQuantity() {
         return quantity;
     }
 
+    /**
+     * Updates the quantity for this cart item.
+     * Only positive quantities are accepted.
+     *
+     * @param quantity the new quantity to set
+     */
     public void setQuantity(int quantity) {
         if (quantity > 0) {
             this.quantity = quantity;

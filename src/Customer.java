@@ -1,99 +1,95 @@
 /**
- * Customer class represents a customer in the convenience store.
- * Extends the User class and includes shopping cart functionality
- * and optional membership card support.
- * 
- * @author Dana Ysabelle A. Pelagio
+ * Represents a customer of the convenience store.
+ * Extends the User class and includes a shopping cart and optional membership card.
+ * Provides methods for cart management, checking out, and membership handling.
  */
 public class Customer extends User {
     private MembershipCard membershipCard;
     private Cart cart;
 
     /**
-     * Constructs a Customer with the specified name.
-     * Initializes a new empty cart for the customer.
+     * Constructs a new Customer with the specified name, username, and password.
+     * Initializes an empty shopping cart.
      *
-     * @param name the name of the customer
+     * @param name the customer's full name
+     * @param username the customer's username
+     * @param password the customer's password
      */
-    public Customer(String name) {
-        super(name);
+    public Customer(String name, String username, String password) {
+        super(name, username, password);
         this.cart = new Cart();
-        this.membershipCard = null;
-    }
-
-    /**
-     * Constructs a Customer with the specified name and membership card.
-     * Initializes a new empty cart for the customer.
-     *
-     * @param name the name of the customer
-     * @param membershipCard the membership card of the customer
-     */
-    public Customer(String name, MembershipCard membershipCard) {
-        super(name);
-        this.cart = new Cart();
-        this.membershipCard = membershipCard;
-    }
-
-    /**
-     * Adds a product to the customer's cart with the specified quantity.
-     * @param product the product to add to the cart
-     * @param quantity the quantity of the product to add
-     */
-    public void addToCart(Product product, int quantity) {
-        if (product != null && quantity > 0) {
-            cart.addItem(product, quantity);
-        }
-    }
-
-    /**
-     * Views the running total of all items in the cart.
-     * @return the subtotal of all items in the cart
-     */
-    public double viewRunningTotal() {
-        return cart.computeSubtotal();
-    }
-
-    /**
-     * Processes the checkout for this customer at the specified store.
-     * Creates and returns a transaction for the purchase.
-     *
-     * @param store the convenience store where checkout is being processed
-     * @return the transaction created from this checkout
-     */
-    public Transaction checkOut(ConvenienceStore store) {
-        double subtotal = this.cart.computeSubtotal();
-
-        Transaction transaction = new Transaction(
-                "TXN-" + System.currentTimeMillis(), // Generate unique transaction ID
-                this,                                 // The customer (this)
-                this.cart.getItems(),                // Copy of cart items
-                subtotal                              // The subtotal (uses new constructor)
-        );
-
-        store.getInventory().autoReduceStock(this.cart);
-        store.saveToSalesHistory(transaction);
-        this.cart = new Cart();
-
-        return transaction;
     }
 
     /**
      * Checks if the customer has a membership card.
-     * @return true if customer has a membership card, false otherwise
+     *
+     * @return true if a membership card is assigned, false otherwise
      */
-    public boolean hasMembershipCard() {
-        return membershipCard != null;
+    public boolean hasMembershipCard() { 
+        return membershipCard != null; 
     }
 
-    public MembershipCard getMembershipCard() {
-        return membershipCard;
+    /**
+     * Returns the customer's membership card.
+     *
+     * @return the MembershipCard object, or null if none assigned
+     */
+    public MembershipCard getMembershipCard() { 
+        return membershipCard; 
     }
 
-    public Cart getCart() {
-        return cart;
+    /**
+     * Assigns a membership card to the customer.
+     *
+     * @param card the MembershipCard to assign
+     */
+    public void setMembershipCard(MembershipCard card) { 
+        this.membershipCard = card; 
     }
 
-    public void setMembershipCard(MembershipCard membershipCard) {
-        this.membershipCard = membershipCard;
+    /**
+     * Returns the customer's current shopping cart.
+     *
+     * @return the Cart object
+     */
+    public Cart getCart() { 
+        return cart; 
+    }
+
+    /**
+     * Adds a product and specified quantity to the customer's cart.
+     *
+     * @param product the Product to add
+     * @param quantity the number of units to add
+     */
+    public void addToCart(Product product, int quantity) { 
+        cart.addItem(product, quantity); 
+    }
+
+    /**
+     * Computes the running total (subtotal) of the items in the cart.
+     *
+     * @return the subtotal amount
+     */
+    public double viewRunningTotal() { 
+        return cart.computeSubtotal(); 
+    }
+
+    /**
+     * Performs checkout for the customer, creating a transaction, updating inventory,
+     * saving it to the store's sales history, and resetting the cart.
+     *
+     * @param store the ConvenienceStore where the checkout occurs
+     * @return the Transaction representing this checkout
+     */
+    public Transaction checkOut(ConvenienceStore store) {
+        double subtotal = cart.computeSubtotal();
+        Transaction txn = new Transaction(
+            "TXN-" + System.currentTimeMillis(), this, cart.getItems(), subtotal
+        );
+        store.getInventory().autoReduceStock(cart);
+        store.saveToSalesHistory(txn);
+        cart = new Cart();
+        return txn;
     }
 }

@@ -6,17 +6,12 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
 /**
- * CheckoutView handles the payment process for a transaction.
- * Displays order summary, accepts payment, and processes checkout.
- *
- * @author Dana Ysabelle A. Pelagio
+ * CheckoutView handles the payment interface.
+ * Displays order summary, accepts payment, shows pricing.
  */
 public class CheckoutView extends BorderPane {
-    private Customer customer;
-    private Cart cart;
     private CheckoutController controller;
 
-    // UI Components
     private ListView<HBox> orderSummaryList;
     private Label subtotalLabel;
     private Label discountLabel;
@@ -35,23 +30,20 @@ public class CheckoutView extends BorderPane {
     private Button backButton;
 
     /**
-     * Constructs a CheckoutView for the specified customer and cart.
+     * Constructs a CheckoutView with the given controller.
      *
-     * @param customer the customer checking out
-     * @param cart the shopping cart
+     * @param controller the CheckoutController instance handling business logic
      */
-    public CheckoutView(Customer customer, Cart cart) {
-        this.customer = customer;
-        this.cart = cart;
-        this.controller = new CheckoutController(customer, cart, this);
+    public CheckoutView(CheckoutController controller) {
+        this.controller = controller;
         initializeUI();
     }
-
-    /**
-     * Initializes the user interface components.
+    
+     /**
+     * Initializes all UI components and layout.
+     * Sets event handlers to connect user input with controller actions.
      */
     private void initializeUI() {
-        // Top: Title
         Label titleLabel = new Label("Checkout");
         titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24));
         titleLabel.setPadding(new Insets(15));
@@ -62,18 +54,14 @@ public class CheckoutView extends BorderPane {
         topBox.setStyle("-fx-background-color: #4CAF50;");
         setTop(topBox);
 
-        // Left: Order Summary
         VBox leftPanel = createOrderSummaryPanel();
 
-        // Right: Payment Panel
         VBox rightPanel = createPaymentPanel();
 
-        // Center: Split Left and Right
         HBox centerBox = new HBox(20, leftPanel, rightPanel);
         centerBox.setPadding(new Insets(20));
         setCenter(centerBox);
 
-        // Bottom: Back Button
         backButton = new Button("← Back to Cart");
         backButton.setStyle("-fx-font-size: 14px;");
         backButton.setOnAction(e -> controller.handleBack());
@@ -83,13 +71,14 @@ public class CheckoutView extends BorderPane {
         bottomBox.setAlignment(Pos.CENTER_LEFT);
         setBottom(bottomBox);
 
-        refreshDisplay();
+        updateMembershipDisplay();
+        refreshOrderSummary();
     }
 
     /**
-     * Creates the order summary panel showing all items.
+     * Creates the left-side order summary panel.
      *
-     * @return VBox containing order summary
+     * @return a VBox containing the order summary list and title
      */
     private VBox createOrderSummaryPanel() {
         Label summaryTitle = new Label("Order Summary");
@@ -107,9 +96,9 @@ public class CheckoutView extends BorderPane {
     }
 
     /**
-     * Creates the payment panel with membership, discounts, and payment input.
+     * Creates the right-side payment panel with membership, pricing, and payment input.
      *
-     * @return VBox containing payment controls
+     * @return a VBox containing membership controls, pricing labels, and payment input
      */
     private VBox createPaymentPanel() {
         VBox paymentBox = new VBox(15);
@@ -117,7 +106,6 @@ public class CheckoutView extends BorderPane {
         paymentBox.setPrefWidth(350);
         paymentBox.setStyle("-fx-border-color: #ddd; -fx-border-width: 1; -fx-background-color: white;");
 
-        // Membership Section
         Label membershipTitle = new Label("Membership Card");
         membershipTitle.setFont(Font.font("Arial", FontWeight.BOLD, 16));
 
@@ -132,19 +120,16 @@ public class CheckoutView extends BorderPane {
         availablePointsLabel.setFont(Font.font("Arial", 12));
 
         useMembershipCheckBox = new CheckBox("Use membership points");
-        useMembershipCheckBox.setOnAction(e -> controller.handleRecalculate());
+        useMembershipCheckBox.setOnAction(e -> controller.recalculatePricing());
 
         VBox membershipBox = new VBox(8, membershipTitle, membershipCardField,
-                applyCardButton, availablePointsLabel,
-                useMembershipCheckBox);
+                applyCardButton, availablePointsLabel, useMembershipCheckBox);
 
-        // Senior Discount
         isSeniorCheckBox = new CheckBox("Apply Senior Citizen Discount (20%)");
-        isSeniorCheckBox.setOnAction(e -> controller.handleRecalculate());
+        isSeniorCheckBox.setOnAction(e -> controller.recalculatePricing());
 
         Separator sep1 = new Separator();
 
-        // Price Summary
         subtotalLabel = new Label("Subtotal: ₱0.00");
         discountLabel = new Label("Discount: -₱0.00");
         vatLabel = new Label("VAT (12%): ₱0.00");
@@ -156,7 +141,6 @@ public class CheckoutView extends BorderPane {
 
         Separator sep2 = new Separator();
 
-        // Payment Section
         Label paymentTitle = new Label("Payment");
         paymentTitle.setFont(Font.font("Arial", FontWeight.BOLD, 16));
 
@@ -178,8 +162,7 @@ public class CheckoutView extends BorderPane {
         processPaymentButton.setOnAction(e -> controller.handleProcessPayment());
 
         VBox paymentInputBox = new VBox(8, paymentTitle, amountLabel,
-                amountReceivedField, changeLabel,
-                processPaymentButton);
+                amountReceivedField, changeLabel, processPaymentButton);
 
         paymentBox.getChildren().addAll(membershipBox, isSeniorCheckBox, sep1,
                 priceBox, sep2, paymentInputBox);
@@ -188,43 +171,21 @@ public class CheckoutView extends BorderPane {
     }
 
     /**
-     * Refreshes the display with current cart and pricing information.
+     * Refreshes the order summary list.
      */
-    public void refreshDisplay() {
-        // Update order summary
+    private void refreshOrderSummary() {
         orderSummaryList.getItems().clear();
-        for (CartItem item : cart.getItems()) {
+        for (CartItem item : controller.getCartItems()) {
             HBox itemBox = createOrderItemBox(item);
             orderSummaryList.getItems().add(itemBox);
         }
-
-        // Update membership info
-        if (customer.hasMembershipCard()) {
-            MembershipCard card = customer.getMembershipCard();
-            membershipCardField.setText(card.getCardNumber());
-            membershipCardField.setDisable(true);
-            applyCardButton.setDisable(true);
-            applyCardButton.setText("Card Applied");
-            applyCardButton.setStyle("-fx-background-color: #ccc; -fx-text-fill: #666;");
-            availablePointsLabel.setText("Available Points: " + card.getPoints());
-            useMembershipCheckBox.setDisable(false);
-        } else {
-            membershipCardField.setDisable(false);
-            applyCardButton.setDisable(false);
-            applyCardButton.setText("Apply Card");
-            applyCardButton.setStyle("");
-            availablePointsLabel.setText("No membership card");
-            useMembershipCheckBox.setDisable(true);
-        }
-
-        controller.handleRecalculate();
     }
 
     /**
-     * Creates a visual box for an order item.
+     * Creates a horizontal box representing a single order item.
      *
-     * @param item the cart item
-     * @return HBox containing item details
+     * @param item the CartItem to display
+     * @return an HBox with product name, quantity, and line total
      */
     private HBox createOrderItemBox(CartItem item) {
         Product product = item.getProduct();
@@ -247,14 +208,34 @@ public class CheckoutView extends BorderPane {
     }
 
     /**
-     * Updates the price labels with calculated values.
-     *
-     * @param subtotal the subtotal amount
-     * @param discount the discount amount
-     * @param vat the VAT amount
-     * @param total the total amount
+     * Updates membership card display.
+     * Called by controller after card is applied.
      */
-    public void updatePriceLabels(double subtotal, double discount, double vat, double total) {
+    public void updateMembershipDisplay() {
+        if (controller.hasMembershipCard()) {
+            MembershipCard card = controller.getMembershipCard();
+            membershipCardField.setText(card.getCardNumber());
+            membershipCardField.setDisable(true);
+            applyCardButton.setDisable(true);
+            applyCardButton.setText("Card Applied");
+            applyCardButton.setStyle("-fx-background-color: #ccc; -fx-text-fill: #666;");
+            availablePointsLabel.setText("Available Points: " + card.getPoints());
+            useMembershipCheckBox.setDisable(false);
+        } else {
+            membershipCardField.setDisable(false);
+            applyCardButton.setDisable(false);
+            applyCardButton.setText("Apply Card");
+            applyCardButton.setStyle("");
+            availablePointsLabel.setText("No membership card");
+            useMembershipCheckBox.setDisable(true);
+        }
+    }
+
+    /**
+     * Displays the pricing information.
+     * Called by controller after calculations.
+     */
+    public void displayPricing(double subtotal, double discount, double vat, double total) {
         subtotalLabel.setText(String.format("Subtotal: ₱%.2f", subtotal));
         discountLabel.setText(String.format("Discount: -₱%.2f", discount));
         vatLabel.setText(String.format("VAT (12%%): ₱%.2f", vat));
@@ -262,11 +243,10 @@ public class CheckoutView extends BorderPane {
     }
 
     /**
-     * Updates the change label.
-     *
-     * @param change the change amount
+     * Displays the change amount.
+     * Called by controller when amount changes.
      */
-    public void updateChangeLabel(double change) {
+    public void displayChange(double change) {
         if (change < 0) {
             changeLabel.setText("Change: Insufficient Payment");
             changeLabel.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
@@ -276,12 +256,30 @@ public class CheckoutView extends BorderPane {
         }
     }
 
-    // Getters for controller
-    public Customer getCustomer() { return customer; }
-    public Cart getCart() { return cart; }
-    public boolean isUseMembershipPoints() { return useMembershipCheckBox.isSelected(); }
-    public boolean isSeniorDiscount() { return isSeniorCheckBox.isSelected(); }
-    public String getAmountReceived() { return amountReceivedField.getText(); }
-    public Button getProcessPaymentButton() { return processPaymentButton; }
-    public Button getBackButton() { return backButton; }
+    /**
+     * Returns whether the "Use membership points" checkbox is selected.
+     *
+     * @return true if selected, false otherwise
+     */
+    public boolean isUseMembershipPointsSelected() {
+        return useMembershipCheckBox.isSelected();
+    }
+
+    /**
+     * Returns whether the "Senior Citizen Discount" checkbox is selected.
+     *
+     * @return true if selected, false otherwise
+     */
+    public boolean isSeniorDiscountSelected() {
+        return isSeniorCheckBox.isSelected();
+    }
+
+    /**
+     * Returns the text entered in the "Amount Received" field.
+     *
+     * @return the amount received as string
+     */
+    public String getAmountReceived() {
+        return amountReceivedField.getText();
+    }
 }

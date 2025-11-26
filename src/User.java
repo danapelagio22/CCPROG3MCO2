@@ -1,8 +1,6 @@
 /**
- * The base class for users of the system, storing basic user information.
- * Other user types like Employee and Customer will extend this class.
- * 
- * @author Joreve P. De Jesus
+ * User represents a system user with authentication credentials.
+ * It stores basic user information such as name, username, and password.
  */
 public class User {
     private String name;
@@ -10,22 +8,11 @@ public class User {
     private String password;
 
     /**
-     * Constructs a new User with a given name.
+     * Constructs a User with the specified name, username, and password.
      *
-     * @param name The name of the user.
-     */
-    public User(String name) {
-        this.name = name;
-        this.username = null;
-        this.password = null;
-    }
-
-    /**
-     * Constructs a new User with name, username, and password.
-     *
-     * @param name The name of the user.
-     * @param username The username for login.
-     * @param password The password for login.
+     * @param name The full name of the user.
+     * @param username The unique username used for login.
+     * @param password The user's account password.
      */
     public User(String name, String username, String password) {
         this.name = name;
@@ -34,36 +21,29 @@ public class User {
     }
 
     /**
-     * Validates the provided password against the stored password.
+     * Returns the user's full name.
      *
-     * @param inputPassword The password to validate.
-     * @return true if the password matches, false otherwise.
+     * @return The user's name.
      */
-    public boolean validatePassword(String inputPassword) {
-        return this.password != null && this.password.equals(inputPassword);
+    public String getName() { 
+        return name; 
+    }
+    
+    /**
+    * Returns the user's username.
+    *
+    * @return The user's username.
+    */
+    public String getUsername() { 
+        return username; 
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
+    /**
+     * Returns the user's password.
+     *
+     * @return The user's password.
+     */
+    public String getPassword() { 
+        return password; 
     }
 }

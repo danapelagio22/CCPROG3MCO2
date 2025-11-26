@@ -1,10 +1,9 @@
 import java.util.ArrayList;
 
 /**
- * Cart class represents a shopping cart that holds items
- * selected by a customer for purchase.
- * 
- * @author Dana Ysabelle A. Pelagio
+ * Represents a shopping cart containing items selected by a customer.
+ * Provides operations for adding, removing, and retrieving cart items,
+ * as well as computing the subtotal.
  */
 public class Cart {
     private ArrayList<CartItem> items;
@@ -40,6 +39,7 @@ public class Cart {
 
     /**
      * Removes a product from the cart.
+     * If the product does not exist in the cart, nothing happens.
      *
      * @param product the product to remove
      */
@@ -53,8 +53,9 @@ public class Cart {
 
     /**
      * Computes the subtotal of all items in the cart.
+     * Subtotal does not include taxes or discounts.
      *
-     * @return the subtotal amount (without tax or discounts)
+     * @return the total cost of all items before tax/discounts
      */
     public double computeSubtotal() {
         double subtotal = 0.0;
@@ -64,32 +65,10 @@ public class Cart {
         return subtotal;
     }
 
-    /**
-     * Lists all items in the cart to the console.
-     */
-    public void listItems() {
-        if (items.isEmpty()) {
-            System.out.println("Cart is empty.");
-            return;
-        }
-
-        System.out.println("\n===== CART ITEMS =====");
-        for (int i = 0; i < items.size(); i++) {
-            CartItem item = items.get(i);
-            Product product = item.getProduct();
-            System.out.printf("%d. %s x%d - P%.2f\n",
-                    i + 1,
-                    product.getName(),
-                    item.getQuantity(),
-                    item.computeLineTotal());
-        }
-        System.out.printf("\nSubtotal: P%.2f\n", computeSubtotal());
-        System.out.println("======================\n");
-    }
-
-    /**
-     * Gets all items in the cart.
-     * @return ArrayList of CartItems
+     /**
+     * Retrieves all items currently in the cart.
+     *
+     * @return a list of CartItem objects
      */
     public ArrayList<CartItem> getItems() {
         return items;

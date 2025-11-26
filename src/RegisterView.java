@@ -6,13 +6,11 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
 /**
- * RegisterView displays the registration interface for new users.
- * Allows customers and employees to create accounts.
- *
- * @author Joreve P. De Jesus
+ * RegisterView displays the registration interface.
+ * It allows users to create either a Customer or Employee account.
  */
 public class RegisterView extends BorderPane {
-    private LoginController controller;
+    private AuthenticationController controller;
     
     private TextField usernameField;
     private PasswordField passwordField;
@@ -26,17 +24,17 @@ public class RegisterView extends BorderPane {
     private VBox employeeFields;
     
     /**
-     * Constructs a RegisterView with the specified controller.
-     *
-     * @param controller the login controller
+     * Constructs a RegisterView and initializes the user interface.
+     * 
+     *  * @param controller The AuthenticationController that handles registration logic.
      */
-    public RegisterView(LoginController controller) {
+    public RegisterView(AuthenticationController controller) {
         this.controller = controller;
         initializeUI();
     }
     
     /**
-     * Initializes the user interface.
+     * Initializes and layouts all UI components for the registration screen.
      */
     private void initializeUI() {
         setStyle("-fx-background-color: linear-gradient(to bottom, #667eea 0%, #764ba2 100%);");
@@ -153,7 +151,8 @@ public class RegisterView extends BorderPane {
     }
     
     /**
-     * Toggles employee-specific fields based on user type.
+     * Toggles the visibility of employee-specific input fields
+     * based on the selected user type.
      */
     private void toggleEmployeeFields() {
         boolean isEmployee = "Employee".equals(userTypeCombo.getValue());
@@ -162,7 +161,8 @@ public class RegisterView extends BorderPane {
     }
     
     /**
-     * Handles the register button click.
+     * Handles user registration input.
+     * Collects form data and forwards it to the controller.
      */
     private void handleRegister() {
         String username = usernameField.getText().trim();
@@ -172,34 +172,15 @@ public class RegisterView extends BorderPane {
         String userType = userTypeCombo.getValue();
         String employeeId = employeeIdField.getText().trim();
         
-        if (name.isEmpty() || username.isEmpty() || password.isEmpty()) {
-            showStatus("Please fill in all required fields", "error");
-            return;
-        }
-        
-        if (password.length() < 4) {
-            showStatus("Password must be at least 4 characters", "error");
-            return;
-        }
-        
-        if (!password.equals(confirmPassword)) {
-            showStatus("Passwords do not match", "error");
-            return;
-        }
-        
-        if ("Employee".equals(userType) && employeeId.isEmpty()) {
-            showStatus("Employee ID is required", "error");
-            return;
-        }
-        
-        controller.handleRegister(username, password, name, userType, employeeId);
+        controller.handleRegister(username, password, confirmPassword, name, userType, employeeId);
     }
     
     /**
-     * Shows a status message.
+     * Displays a status message to the user.
+     * This method is called by the controller.
      *
-     * @param message the message to display
-     * @param type "success", "error", or "info"
+     * @param message The message to display.
+     * @param type The message type (e.g., success, error, info).
      */
     public void showStatus(String message, String type) {
         statusLabel.setText(message);

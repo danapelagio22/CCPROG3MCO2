@@ -2,8 +2,6 @@
  * Payment class handles payment information for a transaction.
  * Stores the amount received from customer and the total cost.
  * Computes change and validates if payment is sufficient.
- *
- * @author Dana Ysabelle A. Pelagio
  */
 public class Payment {
     private double amountReceived;
@@ -41,20 +39,36 @@ public class Payment {
         return amountReceived >= totalCost;
     }
 
+    /**
+     * @return The amount of money received from the customer.
+     */
     public double getAmountReceived() {
         return amountReceived;
     }
 
+    /**
+     * @return The total cost of the transaction.
+     */
     public double getTotalCost() {
         return totalCost;
     }
 
+    /**
+     * Sets the amount of money received from the customer.
+     *
+     * @param amountReceived The amount received. Must be non-negative.
+     */
     public void setAmountReceived(double amountReceived) {
         if (amountReceived >= 0) {
             this.amountReceived = amountReceived;
         }
     }
 
+    /**
+     * Sets the total cost of the transaction.
+     *
+     * @param totalCost The total transaction cost. Must be non-negative.
+     */
     public void setTotalCost(double totalCost) {
         if (totalCost >= 0) {
             this.totalCost = totalCost;

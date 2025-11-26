@@ -15,7 +15,7 @@ public class Transaction {
     private double totalCost;
     private Payment payment;
     private LocalDateTime timeStamp;
-    private static final double VAT_RATE = 0.12; // 12% VAT
+    private static final double VAT_RATE = 0.12;
 
     /**
      * Creates a new Transaction with all needed details including payment.
@@ -46,7 +46,7 @@ public class Transaction {
         this.transactionID = transactionID;
         this.customer = customer;
         this.purchasedItems = new ArrayList<>(purchasedItems);
-        this.payment = null; // Payment will be set later
+        this.payment = null; 
         this.timeStamp = LocalDateTime.now();
         this.totalCost = calculateTotalWithTax();
     }
@@ -97,30 +97,65 @@ public class Transaction {
         return new Receipt(this);
     }
 
+    /**
+     * Sets the payment information associated with this transaction.
+     *
+     * @param payment The Payment object used for this transaction.
+     */
     public void setPayment(Payment payment) {
         this.payment = payment;
     }
 
+    /**
+     * Returns the unique transaction identifier.
+     *
+     * @return The transaction ID.
+     */
     public String getTransactionID() {
         return transactionID;
     }
 
+    /**
+     * Returns the customer who made the transaction.
+     *
+     * @return The Customer associated with this transaction.
+     */
     public Customer getCustomer() {
         return customer;
     }
 
+    /**
+     * Returns the list of items purchased in this transaction.
+     *
+     * @return An ArrayList of purchased cart items.
+     */
     public ArrayList<CartItem> getPurchasedItems() {
         return purchasedItems;
     }
 
+    /**
+     * Returns the total cost of the transaction.
+     *
+     * @return The total transaction cost.
+     */
     public double getTotalCost() {
         return totalCost;
     }
 
+    /**
+     * Returns the payment information for this transaction.
+     *
+     * @return The Payment object used in this transaction.
+     */
     public Payment getPayment() {
         return payment;
     }
     
+    /**
+     * Returns the timestamp indicating when the transaction occurred.
+     *
+     * @return The date and time of the transaction.
+     */
     public LocalDateTime getTimeStamp() {
         return timeStamp;
     }

@@ -1,8 +1,9 @@
 /******************************************************************************
  *  Description     : Main Application class for Convenience Store Management System.
+ *                    Centralized navigation and controller creation.
  *  Author/s        : De Jesus, Joreve P., Pelagio, Dana Ysabelle A.
  *  Section         : S12
- *  Last Modified   : November 25, 2025
+ *  Last Modified   : November 26, 2025
  ******************************************************************************/
 import java.util.HashMap;
 import java.util.List;
@@ -12,24 +13,19 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 /**
- * MainApplication serves as the single entry point for the application.
- * Manages navigation between login, registration, and main application views.
+ * MainApplication serves as the entry point and navigation coordinator.
+ * Creates all controllers and views, wires them together.
  *
  * @author Dana Ysabelle A. Pelagio and Joreve P. De Jesus
  */
 public class MainApplication extends Application {
     
     private Stage primaryStage;
+    private DataManager dataManager;
     private ConvenienceStore store;
+    
     private Customer currentCustomer;
     private Employee currentEmployee;
-    private String currentUsername;
-    
-    private LoginController loginController;
-    private DataManager dataManager;
-    
-    private LoginView loginView;
-    private RegisterView registerView;
     
     public static void main(String[] args) {
         launch(args);
@@ -46,10 +42,8 @@ public class MainApplication extends Application {
 
         dataManager = new DataManager();
         initializeStore();
-        initializeLoginSystem();
-        
-        showLoginView();
 
+        showLoginView();
         primaryStage.show();
     }
     
@@ -58,16 +52,12 @@ public class MainApplication extends Application {
      */
     private void initializeStore() {
         store = new ConvenienceStore("11-Seven", "Taft");
-
         Inventory inventory = store.getInventory();
-
         List<Product> loadedProducts = dataManager.loadProducts();
-
         Map<String, Shelf> shelfMap = new HashMap<>();
 
         for (Product product : loadedProducts) {
             store.getInventory().addProduct(product);
-
             String key = product.getCategory().getName() + "-" + product.getCategory().getType();
 
             if (!shelfMap.containsKey(key)) {
@@ -79,51 +69,45 @@ public class MainApplication extends Application {
             shelfMap.get(key).addProduct(product);
         }
     }
-
-    /**
-     * Sets up the login and registration views and their controller.
-     * This method is called to recreate the login system after logout.
-     */
-    private void initializeLoginSystem() {
-        loginController = new LoginController(this, dataManager);
-        loginView = new LoginView(loginController);
-        registerView = new RegisterView(loginController);
-        
-        loginController.setLoginView(loginView);
-        loginController.setRegisterView(registerView);
-    }
+    
     
     /**
-     * Shows the login view.
+     * Shows the login screen.
      */
     public void showLoginView() {
-        loginView = new LoginView(loginController);
-        Scene loginScene = new Scene(loginView);
+        AuthenticationController authController = new AuthenticationController(dataManager, this);
 
-        primaryStage.setScene(loginScene);
+        LoginView loginView = new LoginView(authController);
+        
+        authController.setView(loginView);
+
+        Scene scene = new Scene(loginView);
+        primaryStage.setScene(scene);
         primaryStage.setTitle("Login - Convenience Store");
     }
     
     /**
-     * Shows the registration view.
+     * Shows the registration screen.
      */
     public void showRegisterView() {
-        Scene registerScene = new Scene(registerView);
+        AuthenticationController authController = new AuthenticationController(dataManager, this);
 
-        primaryStage.setScene(registerScene);
+        RegisterView registerView = new RegisterView(authController);
+
+        authController.setRegisterView(registerView);
+
+        Scene scene = new Scene(registerView);
+        primaryStage.setScene(scene);
         primaryStage.setTitle("Register - Convenience Store");
     }
     
     /**
-     * Called when login is successful. Routes to appropriate view.
-     * 
+     * Called after successful login. Routes to appropriate dashboard.
+     *
      * @param customer the logged-in customer (null if employee)
      * @param employee the logged-in employee (null if customer)
-     * @param username the username used to login
      */
-    public void onLoginSuccess(Customer customer, Employee employee, String username) {
-        this.currentUsername = username;
-        
+    public void onLoginSuccess(Customer customer, Employee employee) {
         if (customer != null) {
             this.currentCustomer = customer;
             this.currentEmployee = null;
@@ -138,23 +122,93 @@ public class MainApplication extends Application {
     /**
      * Shows the customer shopping view.
      */
-    private void showCustomerView() {
-        ConvenienceStoreController storeController = new ConvenienceStoreController(
-            primaryStage, store, currentCustomer, this, dataManager, currentUsername
+    public void showCustomerView() {
+        reloadInventory();
+
+        ShoppingController shoppingController = new ShoppingController(
+            currentCustomer, store, this);
+
+        CustomerView customerView = new CustomerView(shoppingController);
+
+        shoppingController.setView(customerView);
+
+        Scene scene = new Scene(customerView);
+        primaryStage.setScene(scene);
+        primaryStage.setTitle("11-Seven - Shopping");
+    }
+    
+    /**
+     * Shows the shopping cart view.
+     */
+    public void showCartView() {
+        if (currentCustomer.getCart().isEmpty()) {
+            return;
+        }
+        
+        CartController cartController = new CartController(
+            currentCustomer.getCart(),
+            this
         );
-        storeController.showShoppingView();
+
+        CartView cartView = new CartView(cartController);
+        
+        cartController.setView(cartView);
+        
+        Scene scene = new Scene(cartView);
+        primaryStage.setScene(scene);
+        primaryStage.setTitle("Shopping Cart");
+    }
+    
+    /**
+     * Shows the checkout view.
+     */
+    public void showCheckoutView() {
+        CheckoutController checkoutController = new CheckoutController(
+            currentCustomer,
+            currentCustomer.getCart(),
+            store,
+            dataManager,
+            this
+        );
+
+        CheckoutView checkoutView = new CheckoutView(checkoutController);
+        
+        checkoutController.setView(checkoutView);
+
+        Scene scene = new Scene(checkoutView);
+        primaryStage.setScene(scene);
+        primaryStage.setTitle("Checkout");
     }
     
     /**
      * Shows the employee dashboard view.
      */
-    private void showEmployeeView() {
+    public void showEmployeeView() {
         reloadInventory();
         
         EmployeeController employeeController = new EmployeeController(
-            primaryStage, store, currentEmployee, this, dataManager
+            store,
+            currentEmployee,
+            dataManager,
+            this
         );
-        employeeController.showEmployeeView();
+
+        EmployeeView employeeView = new EmployeeView(employeeController);
+        
+        employeeController.setView(employeeView);
+
+        Scene scene = new Scene(employeeView);
+        primaryStage.setScene(scene);
+        primaryStage.setTitle("Employee Dashboard - " + currentEmployee.getName());
+    }
+    
+    /**
+     * Logs out current user and returns to login screen.
+     */
+    public void logout() {
+        currentCustomer = null;
+        currentEmployee = null;
+        showLoginView();
     }
     
     /**
@@ -187,19 +241,6 @@ public class MainApplication extends Application {
             
             shelfMap.get(key).addProduct(product);
         }
-    }
-    
-    /**
-     * Logs out the current user and returns to login screen.
-     */
-    public void logout() {
-        currentCustomer = null;
-        currentEmployee = null;
-        currentUsername = null;
-        
-        // Reinitialize login system to ensure clean state
-        initializeLoginSystem();
-        showLoginView();
     }
     
     public Stage getPrimaryStage() {

@@ -1,27 +1,45 @@
 import java.time.format.DateTimeFormatter;
 
 /**
- * Receipt class generates and displays transaction receipts.
- * 
- * @author Dana Ysabelle A. Pelagio and Joreve P. De Jesus
+ * Receipt represents a transaction receipt.
+ * It generates a formatted text receipt and handles saving
+ * the receipt data to persistent storage.
  */
 public class Receipt {
     private Transaction transaction;
     private DataManager dataManager;
 
+    /**
+     * Constructs a Receipt for the given transaction.
+     *
+     * @param transaction The transaction associated with this receipt.
+     */
     public Receipt(Transaction transaction) {
         this.transaction = transaction;
     }
     
+    /**
+     * Injects the DataManager responsible for saving receipt files.
+     *
+     * @param dataManager The DataManager used to persist receipt data.
+     */
     public void setDataManager(DataManager dataManager) {
         this.dataManager = dataManager;
     }
 
-    public void display() {
-        String receiptText = generateReceiptText();
-        System.out.print(receiptText);
+    /**
+     * Returns the transaction associated with this receipt.
+     *
+     * @return The Transaction linked to this receipt.
+     */
+    public Transaction getTransaction() {
+        return transaction;
     }
 
+    /**
+     * Generates the receipt text and saves it to a file.
+     * If no DataManager is set, the receipt will not be saved.
+     */
     public void saveToFile() {
         if (dataManager != null) {
             String receiptContent = generateReceiptText();
@@ -31,6 +49,13 @@ public class Receipt {
         }
     }
 
+    /**
+     * Generates a formatted receipt as a string.
+     * Includes transaction details, purchased items,
+     * discounts, taxes, and payment information.
+     *
+     * @return A formatted receipt string.
+     */
     private String generateReceiptText() {
         StringBuilder receipt = new StringBuilder();
 

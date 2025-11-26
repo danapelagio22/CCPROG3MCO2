@@ -1,15 +1,16 @@
 /**
- * DiscountPolicy class provides static methods for applying
- * various types of discounts to purchases.
- * Includes membership discounts, senior citizen discounts,
- * and VAT calculations.
+ * DiscountPolicy provides static utility methods for applying various
+ * types of discounts and tax calculations in a convenience store setting.
  * 
- * @author Dana Ysabelle A. Pelagio
+ * It includes:
+ * - Membership discounts based on points.
+ * - Senior citizen discounts (fixed 20% rate).
+ * - VAT calculation (fixed 12% rate).
  */
 public class DiscountPolicy {
 
-    private static final double SENIOR_DISCOUNT_RATE = 0.20; // 20% senior discount
-    private static final double VAT_RATE = 0.12; // 12% VAT
+    private static final double SENIOR_DISCOUNT_RATE = 0.20; 
+    private static final double VAT_RATE = 0.12; 
 
     /**
      * Applies membership discount based on available points.
@@ -28,7 +29,6 @@ public class DiscountPolicy {
         MembershipCard card = customer.getMembershipCard();
         double availableDiscount = card.getDiscount();
 
-        // Apply discount but ensure total doesn't go below 0
         if (availableDiscount > 0) {
             double discountedTotal = total - availableDiscount;
             return Math.max(discountedTotal, 0);

@@ -4,8 +4,6 @@ import java.time.LocalDate;
  * Represents a product available in the convenience store inventory.
  * Stores information like ID, name, price, stock, category, brand, variant,
  * and expiration date.
- * 
- * @author Joreve P. De Jesus
  */
 class Product {
     private int productID;
@@ -89,36 +87,119 @@ class Product {
         }
     }
     
+    /**
+     * Sets the name of the product.
+     *
+     * @param name The new product name.
+     */
     public void setName(String name) {
         this.name = name;
     }
 
+    /**
+     * Sets the price of the product.
+     * Price values less than zero are ignored.
+     *
+     * @param price The new price of the product.
+     */
     public void setPrice(double price) {
         if (price >= 0) {
             this.price = price;
         }
     }
 
+    /**
+     * Sets the brand of the product.
+     *
+     * @param brand The product brand.
+     */
     public void setBrand(String brand) {
         this.brand = brand;
     }
 
+    /**
+     * Sets the variant of the product.
+     *
+     * @param variant The product variant or size.
+     */
     public void setVariant(String variant) {
         this.variant = variant;
     }
 
+    /**
+     * Sets the expiration date of the product.
+     * Automatically updates the perishable status.
+     *
+     * @param expirationDate The expiration date (may be {@code null}).
+     */
     public void setExpirationDate(LocalDate expirationDate) {
         this.expirationDate = expirationDate;
         this.isPerishable = (expirationDate != null);
     }
 
-    public int getProductID() { return productID; }
-    public String getName() { return name; }
-    public double getPrice() { return price; }
-    public int getStock() { return stock; }
-    public Category getCategory() { return category; }
-    public String getBrand() { return brand; }
-    public String getVariant() { return variant; }
-    public LocalDate getExpirationDate() { return expirationDate; }
-    public boolean isPerishable() { return isPerishable; }
+    /**
+     * @return The unique product ID.
+     */
+    public int getProductID() {
+        return productID;
+    }
+
+    /**
+     * @return The name of the product.
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * @return The price of the product.
+     */
+    public double getPrice() {
+        return price;
+    }
+
+    /**
+     * @return The number of units currently in stock.
+     */
+    public int getStock() {
+        return stock;
+    }
+
+    /**
+     * @return The category to which the product belongs.
+     */
+    public Category getCategory() {
+        return category;
+    }
+
+    /**
+     * @return The brand of the product, or {@code null} if none is set.
+     */
+    public String getBrand() {
+        return brand;
+    }
+
+    /**
+     * @return The product variant or size, or {@code null} if none is set.
+     */
+    public String getVariant() {
+        return variant;
+    }
+
+    /**
+     * @return The expiration date of the product, or {@code null} if non-perishable.
+     */
+    public LocalDate getExpirationDate() {
+        return expirationDate;
+    }
+
+    /**
+     * Indicates whether the product is perishable.
+     *
+     * @return {@code true} if the product has an expiration date,
+     *         {@code false} otherwise.
+     */
+    public boolean isPerishable() {
+        return isPerishable;
+    }
 }

@@ -6,13 +6,13 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
 /**
- * LoginView displays the login interface for customers and employees.
- * Provides options to login or register new accounts.
- *
- * @author Dana Ysabelle A. Pelagio and Joreve P. De Jesus
+ * LoginView displays the login interface.
+ * This view allows users to log in either as a Customer or an Employee.
+ * It gathers user credentials and forwards them to the
+ * AuthenticationController for validation.
  */
 public class LoginView extends BorderPane {
-    private LoginController controller;
+    private AuthenticationController controller;
     
     private TextField usernameField;
     private PasswordField passwordField;
@@ -22,17 +22,17 @@ public class LoginView extends BorderPane {
     private Label statusLabel;
     
     /**
-     * Constructs a LoginView with the specified controller.
+     * Constructs a LoginView with the specified AuthenticationController.
      *
-     * @param controller the login controller
+     * @param controller the controller responsible for handling login actions
      */
-    public LoginView(LoginController controller) {
+    public LoginView(AuthenticationController controller) {
         this.controller = controller;
         initializeUI();
     }
     
     /**
-     * Initializes the user interface.
+     * Initializes and lays out all UI components for the login screen.
      */
     private void initializeUI() {
         setStyle("-fx-background-color: linear-gradient(to bottom, #667eea 0%, #764ba2 100%);");
@@ -112,7 +112,7 @@ public class LoginView extends BorderPane {
                                "-fx-font-size: 14px;");
         registerButton.setPrefWidth(350);
         registerButton.setPrefHeight(40);
-        registerButton.setOnAction(e -> handleRegister());
+        registerButton.setOnAction(e -> controller.handleShowRegister());
         
         formBox.getChildren().addAll(
             formTitle,
@@ -132,34 +132,20 @@ public class LoginView extends BorderPane {
         setCenter(centerPane);
     }
     
-    /**
-     * Handles the login button click.
-     */
     private void handleLogin() {
         String username = usernameField.getText().trim();
         String password = passwordField.getText();
         String userType = userTypeCombo.getValue();
         
-        if (username.isEmpty() || password.isEmpty()) {
-            showStatus("Please enter username and password", "error");
-            return;
-        }
-        
         controller.handleLogin(username, password, userType);
     }
     
     /**
-     * Handles the register button click.
-     */
-    private void handleRegister() {
-        controller.handleShowRegister();
-    }
-    
-    /**
-     * Shows a status message.
+     * Displays a status message to the user.
+     * This method is called by the AuthenticationController.
      *
-     * @param message the message to display
-     * @param type "success", "error", or "info"
+     * @param message the message to be displayed
+     * @param type the message type (success, error, info)
      */
     public void showStatus(String message, String type) {
         statusLabel.setText(message);

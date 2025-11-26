@@ -39,6 +39,13 @@ class Inventory {
     }
 
     /**
+     * @return The complete list of products in the inventory.
+     */
+    public ArrayList<Product> getProducts() {
+        return products;
+    }
+
+    /**
      * Adds a new product to the master product list.
      *
      * @param product The product to be added.
@@ -54,8 +61,7 @@ class Inventory {
      */
     public void removeProduct(int productID) {
         products.removeIf(p -> p.getProductID() == productID);
-        
-        // Also remove from shelves
+
         for (Shelf shelf : shelves) {
             shelf.getProducts().removeIf(p -> p.getProductID() == productID);
         }
@@ -140,18 +146,5 @@ class Inventory {
                 }
             }
         }
-    }
-
-    /**
-     * Displays the current inventory by iterating through all shelves and calling their {@code displayShelf} method.
-     */
-    public void displayInventory() {
-        for (Shelf s : shelves) {
-            s.displayShelf();
-        }
-    }
-
-    public ArrayList<Product> getProducts() {
-        return products;
     }
 }

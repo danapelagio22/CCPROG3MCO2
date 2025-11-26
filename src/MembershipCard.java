@@ -3,8 +3,6 @@
  * Manages points accumulation and redemption for discounts.
  * Points are earned at a rate of 1 point per P50 spent.
  * 1 point can be redeemed for P1 discount.
- *
- * @author Dana Ysabelle A. Pelagio
  */
 public class MembershipCard {
     private String cardNumber;
@@ -45,7 +43,7 @@ public class MembershipCard {
         }
 
         points -= pointsToUse;
-        return pointsToUse; // 1 point = 1 peso
+        return pointsToUse; 
     }
 
     /**
@@ -54,17 +52,28 @@ public class MembershipCard {
      * @return the maximum discount amount available
      */
     public double getDiscount() {
-        return points; // 1 point = 1 peso
+        return points; 
     }
 
+    /**
+     * @return The current number of loyalty points on the card.
+     */
     public int getPoints() {
         return points;
     }
 
+    /**
+     * @return The unique membership card number.
+     */
     public String getCardNumber() {
         return cardNumber;
     }
 
+    /**
+     * Sets the loyalty points on the card.
+     *
+     * @param points The number of points. Must be zero or positive.
+     */
     public void setPoints(int points) {
         if (points >= 0) {
             this.points = points;

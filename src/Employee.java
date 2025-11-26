@@ -1,23 +1,30 @@
-import java.util.ArrayList;
-
 /**
  * Represents an employee of the convenience store, inheriting basic user functionality.
  * Employees have specific actions like adding products and restocking.
- * 
- * @author Joreve P. De Jesus
  */
 public class Employee extends User {
     private String employeeID;
 
     /**
-     * Constructs a new Employee with a name and an employee ID.
+     * Constructs an Employee with full credentials.
      *
      * @param name The name of the employee.
+     * @param username The username for login.
+     * @param password The password for login.
      * @param employeeID The unique ID of the employee.
      */
-    public Employee(String name, String employeeID) {
-        super(name);
+    public Employee(String name, String username, String password, String employeeID) {
+        super(name, username, password);
         this.employeeID = employeeID;
+    }
+
+    /**
+     * Returns the unique employee ID.
+     *
+     * @return the employee's ID as a String
+     */
+    public String getEmployeeID() {
+        return employeeID;
     }
 
     /**
@@ -51,22 +58,10 @@ public class Employee extends User {
      * @param updatedProduct The Product object containing the updated information.
      */
     public void updateProductInfo(Inventory inventory, Product updatedProduct) {
-        // Find the old product to check if category changed
-        Product oldProduct = null;
-        for (Product p : inventory.getProducts()) {
-            if (p.getProductID() == updatedProduct.getProductID()) {
-                oldProduct = p;
-                break;
-            }
-        }
-        
-        // Remove old product from inventory and all shelves
         inventory.removeProduct(updatedProduct.getProductID());
-        
-        // Add updated product to inventory
+
         inventory.addProduct(updatedProduct);
-        
-        // Find or create appropriate shelf for the updated product
+
         boolean shelfFound = false;
         for (Shelf shelf : inventory.getShelves()) {
             if (shelf.getCategory().getName().equals(updatedProduct.getCategory().getName()) &&
@@ -77,7 +72,6 @@ public class Employee extends User {
             }
         }
         
-        // If no matching shelf exists, create a new one
         if (!shelfFound) {
             Shelf newShelf = new Shelf(updatedProduct.getCategory());
             newShelf.addProduct(updatedProduct);
@@ -88,9 +82,5 @@ public class Employee extends User {
         }
         
         System.out.println("Updated product information for: " + updatedProduct.getName());
-    }
-    
-    public String getEmployeeID() {
-        return employeeID;
     }
 }

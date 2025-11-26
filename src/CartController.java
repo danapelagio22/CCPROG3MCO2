@@ -1,32 +1,70 @@
+import java.util.ArrayList;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 
 /**
- * CartController handles user interactions with the shopping cart.
- * Manages adding, removing, and updating cart items.
- *
- * @author Dana Ysabelle A. Pelagio
+ * Handles cart operations such as modifying item quantities,
+ * removing items, clearing the cart, and navigating to checkout.
  */
 public class CartController {
     private Cart cart;
-    private CartView cartView;
+    private MainApplication mainApp;
+    private CartView view;
 
     /**
-     * Constructs a CartController for the specified cart and view.
+     * Constructs a CartController with the specified cart and application reference.
      *
-     * @param cart the cart model
-     * @param cartView the cart view
+     * @param cart the shopping cart being managed
+     * @param mainApp the main application reference used for navigation
      */
-    public CartController(Cart cart, CartView cartView) {
+    public CartController(Cart cart, MainApplication mainApp) {
         this.cart = cart;
-        this.cartView = cartView;
+        this.mainApp = mainApp;
+    }
+    
+    /**
+     * Assigns the CartView instance to this controller.
+     *
+     * @param view the view associated with the cart
+     */
+    public void setView(CartView view) {
+        this.view = view;
+    }
+
+     /**
+     * Checks whether the cart contains any items.
+     *
+     * @return true if the cart is empty, false otherwise
+     */
+    public boolean isCartEmpty() {
+        return cart.isEmpty();
     }
 
     /**
-     * Handles quantity changes for a cart item.
+     * Retrieves all items currently stored in the cart.
+     *
+     * @return a list of CartItem objects
+     */
+    public ArrayList<CartItem> getCartItems() {
+        return cart.getItems();
+    }
+
+     /**
+     * Computes the subtotal of all cart items before tax or discounts.
+     *
+     * @return the subtotal amount
+     */
+    public double computeSubtotal() {
+        return cart.computeSubtotal();
+    }
+
+     /**
+     * Handles quantity changes for a specific cart item.
+     * If the new quantity is zero or below, the item is removed.
+     * If stock is insufficient, an alert is shown.
      *
      * @param item the cart item to update
-     * @param newQuantity the new quantity
+     * @param newQuantity the updated quantity value
      */
     public void handleQuantityChange(CartItem item, int newQuantity) {
         if (newQuantity <= 0) {
@@ -38,16 +76,17 @@ public class CartController {
             showAlert("Insufficient Stock",
                     "Only " + item.getProduct().getStock() + " units available.",
                     Alert.AlertType.WARNING);
-            cartView.refreshCartDisplay();
+            view.refreshCartDisplay();
             return;
         }
 
         item.setQuantity(newQuantity);
-        cartView.refreshCartDisplay();
+        view.refreshCartDisplay();
     }
 
     /**
-     * Handles removing an item from the cart.
+     * Handles removing a specific item from the cart.
+     * Displays a confirmation prompt before removal.
      *
      * @param item the cart item to remove
      */
@@ -60,7 +99,7 @@ public class CartController {
         confirmAlert.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
                 cart.removeItem(item.getProduct());
-                cartView.refreshCartDisplay();
+                view.refreshCartDisplay();
             }
         });
     }
@@ -81,7 +120,7 @@ public class CartController {
         confirmAlert.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
                 cart.clear();
-                cartView.refreshCartDisplay();
+                view.refreshCartDisplay();
                 showAlert("Cart Cleared", "All items removed from cart.", Alert.AlertType.INFORMATION);
             }
         });
@@ -89,7 +128,6 @@ public class CartController {
 
     /**
      * Handles proceeding to checkout.
-     * This should be connected to CheckoutView by the main controller.
      */
     public void handleCheckout() {
         if (cart.isEmpty()) {
@@ -97,16 +135,21 @@ public class CartController {
             return;
         }
 
-        // This will be handled by the main StoreController
-        // which will switch to CheckoutView
-        System.out.println("Proceeding to checkout with " + cart.getItems().size() + " items");
+        mainApp.showCheckoutView();
+    }
+    
+    /**
+     * Handles going back to shopping.
+     */
+    public void handleBackToShopping() {
+        mainApp.showCustomerView();
     }
 
     /**
-     * Shows an alert dialog with the specified message.
+     * Displays a simple alert with the specified title, message, and type.
      *
      * @param title the alert title
-     * @param message the alert message
+     * @param message the message content
      * @param type the alert type
      */
     private void showAlert(String title, String message, Alert.AlertType type) {
